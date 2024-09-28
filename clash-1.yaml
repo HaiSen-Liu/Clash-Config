@@ -1,0 +1,91 @@
+port: 7890
+allow-lan: true
+mode: rule
+log-level: info
+unified-delay: true
+global-client-fingerprint: chrome
+dns:
+  enable: true
+  listen: :53
+  ipv6: true
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  default-nameserver: 
+    - 223.5.5.5
+    - 8.8.8.8
+  nameserver:
+    - https://dns.alidns.com/dns-query
+    - https://doh.pub/dns-query
+  fallback:
+    - https://1.0.0.1/dns-query
+    - tls://dns.google
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+    ipcidr:
+      - 240.0.0.0/4
+
+proxies:
+- name: vless-reality-vision-laxpro1-20240610134934372a3b               
+  type: vless
+  server: 166.0.188.201                           
+  port: 59033                                
+  uuid: b4536df6-5178-434e-a1e9-990cebb224f2  
+  network: tcp
+  udp: true
+  tls: true
+  flow: xtls-rprx-vision
+  servername: www.yahoo.com                
+  reality-opts: 
+    public-key: alJQuHF52f9lgmSiCXv3ajOHRPRwVjzQWD6d6w1hMS0   
+    short-id: 'eb0fecfa'                   
+  client-fingerprint: chrome                 
+
+- name: vmess-ws-laxpro1-20240610134934372a3b                         
+  type: vmess
+  server: 166.0.188.201                       
+  port: 8880                                   
+  uuid: b4536df6-5178-434e-a1e9-990cebb224f2      
+  alterId: 0
+  cipher: auto
+  udp: true
+  tls: false
+  network: ws
+  servername: www.bing.com                  
+  ws-opts:
+    path: "b4536df6-5178-434e-a1e9-990cebb224f2-vm"                            
+    headers:
+      Host: www.bing.com                     
+
+proxy-groups:
+- name: 负载均衡
+  type: load-balance
+  url: https://www.gstatic.com/generate_204
+  interval: 300
+  strategy: round-robin
+  proxies:
+    - vless-reality-vision-laxpro1-20240610134934372a3b                              
+    - vmess-ws-laxpro1-20240610134934372a3b
+
+- name: 自动选择
+  type: url-test
+  url: https://www.gstatic.com/generate_204
+  interval: 300
+  tolerance: 50
+  proxies:
+    - vless-reality-vision-laxpro1-20240610134934372a3b                              
+    - vmess-ws-laxpro1-20240610134934372a3b
+    
+- name: ??选择代理节点
+  type: select
+  proxies:
+    - 负载均衡                                         
+    - 自动选择
+    - DIRECT
+    - vless-reality-vision-laxpro1-20240610134934372a3b                              
+    - vmess-ws-laxpro1-20240610134934372a3b
+
+rules:
+  - GEOIP,LAN,DIRECT
+  - GEOIP,CN,DIRECT
+  - MATCH,??选择代理节点
